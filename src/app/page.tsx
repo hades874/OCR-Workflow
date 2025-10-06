@@ -12,7 +12,7 @@ import { useFileUpload } from '@/hooks/useFileUpload';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { useToast } from '@/hooks/use-toast';
 
-type AppState = 'idle' | 'file_selected' | 'uploading' | 'processing' | 'complete' | 'error';
+type AppState = 'idle' | 'uploading' | 'processing' | 'complete' | 'error';
 
 interface ResultFile {
   name: string;
@@ -52,20 +52,16 @@ export default function Home() {
 
   const { lastMessage, connect, disconnect } = useWebSocket(wsUrl);
 
-  const handleFileSelect = (file: File) => {
+  const handleFileSelectAndUpload = useCallback(async (file: File) => {
+    if (!file) return;
     setSelectedFile(file);
-    setAppState('file_selected');
-  };
-
-  const handleStartProcessing = async () => {
-    if (!selectedFile) return;
     setAppState('uploading');
     try {
-      await upload(selectedFile);
+      await upload(file);
     } catch (e) {
       // error is handled in the hook's state
     }
-  };
+  }, [upload]);
   
   const resetState = useCallback(() => {
     setAppState('idle');
@@ -140,20 +136,14 @@ export default function Home() {
   const renderContent = () => {
     switch (appState) {
       case 'idle':
-      case 'file_selected':
         return (
           <>
             <FileUploader
-              onFileSelect={handleFileSelect}
+              onFileSelect={handleFileSelectAndUpload}
               isDisabled={isUploading}
+              selectedFile={selectedFile}
+              onFileRemove={resetState}
             />
-            {appState === 'file_selected' && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center mt-6">
-                <Button onClick={handleStartProcessing} size="lg" disabled={isUploading}>
-                  Start Processing
-                </Button>
-              </motion.div>
-            )}
           </>
         );
       case 'uploading':

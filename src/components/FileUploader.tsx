@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Upload, File as FileIcon, X, AlertCircle } from 'lucide-react';
 import { cn, formatFileSize } from '@/lib/utils';
@@ -11,6 +11,7 @@ interface FileUploaderProps {
   onFileRemove?: () => void;
   accept?: string;
   isDisabled?: boolean;
+  selectedFile: File | null;
 }
 
 export default function FileUploader({
@@ -18,16 +19,15 @@ export default function FileUploader({
   onFileRemove,
   accept = '*/*',
   isDisabled = false,
+  selectedFile,
 }: FileUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   const handleFile = useCallback(
     (file: File) => {
       setError(null);
-      setSelectedFile(file);
       onFileSelect(file);
     },
     [onFileSelect]
@@ -69,7 +69,6 @@ export default function FileUploader({
   );
 
   const removeFile = useCallback(() => {
-    setSelectedFile(null);
     setError(null);
     if(onFileRemove) onFileRemove();
     if (inputRef.current) {
@@ -99,7 +98,7 @@ export default function FileUploader({
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
-              onClick={() => inputRef.current?.click()}
+              onClick={() => !isDisabled && inputRef.current?.click()}
             >
               <input
                 ref={inputRef}
