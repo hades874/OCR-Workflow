@@ -1,0 +1,15 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "framework": "nextjs",
+  "functions": {
+    "app/api/webhook/route.ts": {
+      "maxDuration": 300
+    }
+  },
+  "env": {
+    "N8N_WEBHOOK_URL": "@n8n_webhook_url",
+    "N8N_WEBSOCKET_URL": "@n8n_websocket_url",
+    "API_KEY": "@api_key"
+  }
+}
