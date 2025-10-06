@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { useFileUpload } from '@/hooks/useFileUpload';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { useToast } from '@/hooks/use-toast';
-import { env } from '@/lib/config';
+import config from '@/lib/config';
 
 type AppState = 'idle' | 'uploading' | 'processing' | 'complete' | 'error';
 
@@ -41,11 +41,20 @@ export default function Home() {
 
   const wsUrl = useMemo(() => {
     if (sessionId) {
-      // Append sessionId as a query parameter for easy parsing on the server
-      return `${env.NEXT_PUBLIC_N8N_WEBSOCKET_URL}?sessionId=${sessionId}`;
+      if (!config.NEXT_PUBLIC_N8N_WEBSOCKET_URL) {
+        console.error("NEXT_PUBLIC_N8N_WEBSOCKET_URL is not defined. WebSocket connection cannot be established.");
+        toast({
+          variant: 'destructive',
+          title: 'Configuration Error',
+          description: 'The WebSocket URL is not configured. Please contact support.',
+        });
+        setAppState('error');
+        return null;
+      }
+      return `${config.NEXT_PUBLIC_N8N_WEBSOCKET_URL}?sessionId=${sessionId}`;
     }
     return null;
-  }, [sessionId]);
+  }, [sessionId, toast]);
 
   const { lastMessage, connect, disconnect } = useWebSocket(wsUrl);
 
@@ -144,7 +153,6 @@ export default function Home() {
               onFileSelect={handleFileSelectAndUpload}
               isDisabled={isUploading}
               selectedFile={selectedFile}
-              onFileRemove={() => handleFileSelectAndUpload(null)}
             />
           </>
         );
