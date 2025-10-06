@@ -42,9 +42,6 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  env: {
-    NEXT_PUBLIC_N8N_WEBSOCKET_URL: process.env.N8N_WEBSOCKET_URL,
-  }
 };
 
 export default nextConfig;
