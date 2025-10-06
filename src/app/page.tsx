@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { Sparkles, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-const N8N_FORM_URL = 'https://stage-n8n.10minuteschool.com/form-test/268b2b65-4c84-4b07-aab9-57bc47c4a873';
+const N8N_FORM_URL = 'https://stage-n8n.10minuteschool.com/form-test/615be63c-391d-4f58-8993-3ad2b0e6d68b';
 
 export default function Home() {
 
