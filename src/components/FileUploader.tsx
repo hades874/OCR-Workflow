@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useCallback, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Upload, File as FileIcon, X, AlertCircle } from 'lucide-react';
 import { cn, formatFileSize } from '@/lib/utils';
 import { Button } from './ui/button';
 
 interface FileUploaderProps {
-  onFileSelect: (file: File) => void;
+  onFileSelect: (file: File | null) => void;
   onFileRemove?: () => void;
   accept?: string;
   isDisabled?: boolean;
@@ -70,11 +70,11 @@ export default function FileUploader({
 
   const removeFile = useCallback(() => {
     setError(null);
-    if(onFileRemove) onFileRemove();
+    onFileSelect(null);
     if (inputRef.current) {
         inputRef.current.value = "";
     }
-  }, [onFileRemove]);
+  }, [onFileSelect]);
 
   return (
     <div className="w-full max-w-2xl mx-auto">

@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { useFileUpload } from '@/hooks/useFileUpload';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { useToast } from '@/hooks/use-toast';
+import { env } from '@/lib/config';
 
 type AppState = 'idle' | 'uploading' | 'processing' | 'complete' | 'error';
 
@@ -19,10 +20,6 @@ interface ResultFile {
   url: string;
   size?: string;
 }
-
-// Define the WebSocket base URL outside the component
-// This ensures it's captured correctly during the build process for Vercel.
-const WS_BASE_URL = process.env.NEXT_PUBLIC_N8N_WEBSOCKET_URL;
 
 export default function Home() {
   const [appState, setAppState] = useState<AppState>('idle');
@@ -43,17 +40,22 @@ export default function Home() {
   } = useFileUpload();
 
   const wsUrl = useMemo(() => {
-    if (sessionId && WS_BASE_URL) {
+    if (sessionId) {
       // Append sessionId as a query parameter for easy parsing on the server
-      return `${WS_BASE_URL}?sessionId=${sessionId}`;
+      return `${env.NEXT_PUBLIC_N8N_WEBSOCKET_URL}?sessionId=${sessionId}`;
     }
     return null;
   }, [sessionId]);
 
   const { lastMessage, connect, disconnect } = useWebSocket(wsUrl);
 
-  const handleFileSelectAndUpload = useCallback(async (file: File) => {
-    if (!file) return;
+  const handleFileSelectAndUpload = useCallback(async (file: File | null) => {
+    if (!file) {
+      resetUpload();
+      setSelectedFile(null);
+      setAppState('idle');
+      return;
+    };
     setSelectedFile(file);
     setAppState('uploading');
     try {
@@ -61,7 +63,7 @@ export default function Home() {
     } catch (e) {
       // error is handled in the hook's state
     }
-  }, [upload]);
+  }, [upload, resetUpload]);
   
   const resetState = useCallback(() => {
     setAppState('idle');
@@ -142,7 +144,7 @@ export default function Home() {
               onFileSelect={handleFileSelectAndUpload}
               isDisabled={isUploading}
               selectedFile={selectedFile}
-              onFileRemove={resetState}
+              onFileRemove={() => handleFileSelectAndUpload(null)}
             />
           </>
         );
