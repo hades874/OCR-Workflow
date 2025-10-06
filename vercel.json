@@ -6,10 +6,5 @@
     "app/api/webhook/route.js": {
       "maxDuration": 300
     }
-  },
-  "env": {
-    "N8N_WEBHOOK_URL": "@n8n_webhook_url",
-    "NEXT_PUBLIC_N8N_WEBSOCKET_URL": "@n8n_websocket_url",
-    "API_KEY": "@api_key"
   }
 }
