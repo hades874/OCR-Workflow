@@ -1,179 +1,16 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles } from 'lucide-react';
-
-import FileUploader from '@/components/FileUploader';
-import ProgressTracker from '@/components/ProgressTracker';
-import ResultsDisplay from '@/components/ResultsDisplay';
+import React from 'react';
+import { motion } from 'framer-motion';
+import { Sparkles, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useFileUpload } from '@/hooks/useFileUpload';
-import { useWebSocket } from '@/hooks/useWebSocket';
-import { useToast } from '@/hooks/use-toast';
-import config from '@/lib/config';
 
-type AppState = 'idle' | 'uploading' | 'processing' | 'complete' | 'error';
-
-interface ResultFile {
-  name: string;
-  url: string;
-  size?: string;
-}
+const N8N_FORM_URL = 'https://stage-n8n.10minuteschool.com/form-test/268b2b65-4c84-4b07-aab9-57bc47c4a873';
 
 export default function Home() {
-  const [appState, setAppState] = useState<AppState>('idle');
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [startTime, setStartTime] = useState<number | undefined>(undefined);
-  const [results, setResults] = useState<ResultFile[]>([]);
-  const [statusMessage, setStatusMessage] = useState('');
-  const [processingProgress, setProcessingProgress] = useState(0);
 
-  const { toast } = useToast();
-  const {
-    upload,
-    isUploading,
-    progress: uploadProgress,
-    error: uploadError,
-    sessionId,
-    reset: resetUpload,
-  } = useFileUpload();
-
-  const wsUrl = useMemo(() => {
-    if (sessionId) {
-      if (!config.NEXT_PUBLIC_N8N_WEBSOCKET_URL) {
-        console.error("NEXT_PUBLIC_N8N_WEBSOCKET_URL is not defined. WebSocket connection cannot be established.");
-        toast({
-          variant: 'destructive',
-          title: 'Configuration Error',
-          description: 'The WebSocket URL is not configured. Please contact support.',
-        });
-        setAppState('error');
-        return null;
-      }
-      return `${config.NEXT_PUBLIC_N8N_WEBSOCKET_URL}?sessionId=${sessionId}`;
-    }
-    return null;
-  }, [sessionId, toast]);
-
-  const { lastMessage, connect, disconnect } = useWebSocket(wsUrl);
-
-  const handleFileSelectAndUpload = useCallback(async (file: File | null) => {
-    if (!file) {
-      resetUpload();
-      setSelectedFile(null);
-      setAppState('idle');
-      return;
-    };
-    setSelectedFile(file);
-    setAppState('uploading');
-    try {
-      await upload(file);
-    } catch (e) {
-      // error is handled in the hook's state
-    }
-  }, [upload, resetUpload]);
-  
-  const resetState = useCallback(() => {
-    setAppState('idle');
-    setSelectedFile(null);
-    setStartTime(undefined);
-    setResults([]);
-    setStatusMessage('');
-    setProcessingProgress(0);
-    resetUpload();
-    disconnect();
-  }, [resetUpload, disconnect]);
-
-
-  // Effect to handle upload state changes
-  useEffect(() => {
-    if (isUploading) {
-      setAppState('uploading');
-      setStatusMessage('Uploading file...');
-    }
-  }, [isUploading]);
-  
-  // Effect to handle upload errors
-  useEffect(() => {
-    if (uploadError) {
-      setAppState('error');
-      toast({
-        variant: 'destructive',
-        title: 'Upload Failed',
-        description: uploadError,
-      });
-    }
-  }, [uploadError, toast]);
-  
-  // Effect to transition from upload to processing
-  useEffect(() => {
-    if (sessionId && appState === 'uploading' && !isUploading) {
-      setAppState('processing');
-      setStartTime(Date.now());
-      setStatusMessage('Connecting to processing service...');
-      connect();
-    }
-  }, [sessionId, appState, isUploading, connect]);
-
-  // Effect to handle WebSocket messages
-  useEffect(() => {
-    if (lastMessage) {
-      const { type, progress, message, data } = lastMessage;
-      switch (type) {
-        case 'progress':
-          setProcessingProgress(progress ?? 0);
-          setStatusMessage(message ?? 'Processing...');
-          break;
-        case 'complete':
-          setProcessingProgress(100);
-          setResults(data?.files ?? []);
-          setAppState('complete');
-          disconnect();
-          break;
-        case 'error':
-          setAppState('error');
-          toast({
-            variant: 'destructive',
-            title: 'Processing Error',
-            description: message ?? 'An unknown error occurred.',
-          });
-          disconnect();
-          break;
-      }
-    }
-  }, [lastMessage, disconnect, toast]);
-
-  const renderContent = () => {
-    switch (appState) {
-      case 'idle':
-        return (
-          <>
-            <FileUploader
-              onFileSelect={handleFileSelectAndUpload}
-              isDisabled={isUploading}
-              selectedFile={selectedFile}
-            />
-          </>
-        );
-      case 'uploading':
-      case 'processing':
-        const progress = appState === 'uploading' ? uploadProgress : processingProgress;
-        return <ProgressTracker progress={progress} status={statusMessage} startTime={startTime} />;
-      case 'complete':
-        return <ResultsDisplay files={results} onReset={resetState} />;
-      case 'error':
-        return (
-          <div className="text-center space-y-4">
-            <p className="text-destructive-foreground">An error occurred. Please try again.</p>
-            <Button onClick={resetState} variant="outline">
-              Start Over
-            </Button>
-          </div>
-        );
-      default:
-        return null;
-    }
+  const handleStartProcess = () => {
+    window.open(N8N_FORM_URL, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -209,19 +46,27 @@ export default function Home() {
 
         <motion.div
           layout
-          className="relative bg-card p-6 sm:p-10 rounded-xl shadow-lg border"
+          className="relative bg-card p-6 sm:p-10 rounded-xl shadow-lg border flex flex-col items-center justify-center text-center"
         >
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={appState}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="space-y-6"
+          >
+            <h3 className="text-2xl font-semibold text-foreground">Ready to start?</h3>
+            <p className="text-muted-foreground max-w-md mx-auto">
+              Click the button below to open the submission form. You'll be able to upload your file and start the OCR process directly through our n8n workflow.
+            </p>
+            <Button
+              onClick={handleStartProcess}
+              size="lg"
+              className="group"
             >
-              {renderContent()}
-            </motion.div>
-          </AnimatePresence>
+              Start OCR Process
+              <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+            </Button>
+          </motion.div>
         </motion.div>
       </div>
     </main>
