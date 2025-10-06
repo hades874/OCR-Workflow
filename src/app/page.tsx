@@ -20,6 +20,10 @@ interface ResultFile {
   size?: string;
 }
 
+// Define the WebSocket base URL outside the component
+// This ensures it's captured correctly during the build process for Vercel.
+const WS_BASE_URL = process.env.NEXT_PUBLIC_N8N_WEBSOCKET_URL;
+
 export default function Home() {
   const [appState, setAppState] = useState<AppState>('idle');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -39,10 +43,9 @@ export default function Home() {
   } = useFileUpload();
 
   const wsUrl = useMemo(() => {
-    const baseUrl = process.env.NEXT_PUBLIC_N8N_WEBSOCKET_URL;
-    if (sessionId && baseUrl) {
+    if (sessionId && WS_BASE_URL) {
       // Append sessionId as a query parameter for easy parsing on the server
-      return `${baseUrl}?sessionId=${sessionId}`;
+      return `${WS_BASE_URL}?sessionId=${sessionId}`;
     }
     return null;
   }, [sessionId]);
