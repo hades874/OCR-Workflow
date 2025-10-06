@@ -15,7 +15,11 @@ export function useWebSocket(url: string | null) {
   const ws = useRef<WebSocket | null>(null);
 
   const connect = useCallback(() => {
-    if (!url || ws.current) return;
+    if (!url) {
+      console.warn('WebSocket URL is not provided. Connection skipped.');
+      return;
+    }
+    if (ws.current) return;
 
     try {
       ws.current = new WebSocket(url);
